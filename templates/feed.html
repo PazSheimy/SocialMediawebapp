@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Feed</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="mt-5 mb-3">Public Feed</h1>
+
+        <!-- Upload Media Button -->
+        <a href="{{ url_for('upload_media') }}" class="btn btn-primary mb-3"><i class="fas fa-upload"></i> Upload
+            Media</a>
+
+        {% for media in media_files %}
+        <div class="card mb-4">
+            <div class="card-body">
+                {% if media.media_type == 'image' %}
+                <img src="{{ url_for('static', filename='img/' + media.filename) }}" class="img-fluid">
+                {% elif media.media_type == 'video' %}
+                <video controls class="img-fluid">
+                    <source src="{{ url_for('static', filename='videos/' + media.filename) }}" type="video/mp4">
+                </video>
+                {% endif %}
+                <p>{{ media.description }}</p>
+
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <img class="profile-pic"
+                            src="{{ url_for('static', filename='profile/' + media.user.profile_pic) }}"
+                            alt="Profile Picture">
+                        <p class="d-inline">
+                            Uploaded by: <a href="{{ url_for('user', username=media.user.username) }}">{{
+                                media.user.username
+                                }}</a>
+                        </p>
+                    </div>
+
+                    <div>
+                        <!-- like button -->
+                        <form action="{{ url_for('like', media_id=media.id) }}" method="post" class="d-inline mr-2">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-thumbs-up"></i> Like {{
+                                media.likes.count() }}</button>
+                        </form>
+
+                        <!-- dislike button -->
+                        <form action="{{ url_for('dislike', media_id=media.id) }}" method="post" class="d-inline mr-2">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-thumbs-down"></i> Dislike {{
+                                media.dislikes.count() }}</button>
+                        </form>
+
+                        <!-- comment button -->
+                        <button class="btn btn-primary comment-btn"><i class="fas fa-comment"></i> Comment {{
+                            media.comments.count() }}</button>
+                    </div>
+                </div>
+
+
+                <!-- comment form -->
+                <form action="{{ url_for('comment') }}" method="post" class="comment-form" style="display: none;">
+                    <input type="hidden" name="media_id" value="{{ media.id }}">
+                    <div class="form-group">
+                        <textarea name="content" class="form-control" placeholder="Write a comment..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit
+                        Comment</button>
+                </form>
+
+                <!-- comments -->
+                <div class="comments-section" style="display: none;">
+                    {% for comment in media.comments %}
+                    <div class="comment">
+                        <img class="profile-pic"
+                            src="{{ url_for('static', filename='profile/' + comment.user.profile_pic) }}"
+                            alt="Profile Picture">
+                        <p>{{ comment.user.username }}: {{ comment.body }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+
+
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            $(".comment-btn").click(function () {
+                $(this).closest('.card-body').find(".comment-form, .comments-section").slideToggle();
+            });
+        });
+    </script>
+
+</body>
+
+</html>

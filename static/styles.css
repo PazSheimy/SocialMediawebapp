@@ -1,0 +1,19 @@
+
+
+.profile-header {
+    display: flex;
+    align-items: center;  /* This will vertically center align the image and the title */
+    gap: 20px;  /* This will create some space between the image and the title */
+}
+.profile-pic {
+    border-radius: 50%;  /* This will make the image circular */
+    width: 100px;  /* Or any other size you prefer */
+    height: 100px;  /* The height and width should be the same to keep the image circular */
+    object-fit: cover;  /* This will ensure that the image covers the whole area of the img element */
+}
+.comment {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
