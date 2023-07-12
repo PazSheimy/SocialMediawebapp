@@ -9,6 +9,9 @@ from wtforms.validators import DataRequired, Length
 from flask_dropzone import Dropzone
 from werkzeug.utils import secure_filename
 import os
+from flask import Flask, session
+from werkzeug.exceptions import NotFound
+
 
 # Blueprint files
 from auth import auth
@@ -74,6 +77,35 @@ app.register_blueprint(auth, url_prefix='/auth')
 def home():
     return 'Hello, World!'
 
+
+
+
+@app.route('/delete_media/<int:media_id>', methods=['POST'])
+@login_required
+def delete_media(media_id):
+    media = Media.query.get(media_id)
+    if media is None:
+        raise NotFound("Media not found.")
+    if media.user_id != current_user.id:
+        abort(403)  # HTTP 403 Forbidden if the current user doesn't own the media
+    else:
+        # Delete the media file from the file system
+        media_path = os.path.join(
+            app.config['UPLOADED_PHOTOS_DEST'] if media.media_type == 'image' else app.config['UPLOADED_VIDEOS_DEST'],
+            media.filename
+        )
+        if os.path.exists(media_path):
+            os.remove(media_path)
+
+        # Delete the media object from the database
+        db.session.delete(media)
+        db.session.commit()
+        flash('Media deleted successfully.')
+    return redirect(url_for('feed'))
+
+
+
+
 @app.route('/like/<int:media_id>', methods=['POST'])
 @login_required
 def like(media_id):
@@ -110,6 +142,9 @@ def dislike(media_id):
     db.session.commit()
     return redirect(url_for('feed'))
 
+
+
+#to comment and retreive comments
 @app.route('/comment', methods=['POST'])
 @login_required
 def comment():
@@ -120,8 +155,20 @@ def comment():
     db.session.commit()
     return redirect(url_for('feed'))
 
+#to delete comments
+@app.route('/delete_comment', methods=['POST'])
+@login_required
+def delete_comment():
+    comment_id = request.form['comment_id']
+    comment = Comment.query.get(comment_id)
+    if comment.user_id == current_user.id:
+        db.session.delete(comment)
+        db.session.commit()
+    return redirect(url_for('feed'))
 
 
+
+#to follow other users
 @app.route('/follow/<int:user_id>', methods=['POST'])
 @login_required
 def follow(user_id):
@@ -137,7 +184,7 @@ def follow(user_id):
     flash('You are following {}!'.format(user.username))
     return redirect(url_for('user', username=user.username))
 
-
+#to unfollow users
 @app.route('/unfollow/<int:user_id>', methods=['POST'])
 @login_required
 def unfollow(user_id):
@@ -165,6 +212,13 @@ def user(username):
     followee_counts = len(user.followed.all())
 
     return render_template('user_profile.html', user=user, posts=posts, media=media, follower_counts=follower_counts, followee_counts= followee_counts)
+
+#to click on user commetn to get redirect ot their profile
+@app.route('/profile/<username>')
+def profile(username):
+    user = User.query.filter_by(username=username).first()
+    # Render a profile template for the user
+    return render_template('user_profile.html', user=user)
 
 
 @app.route('/feed')

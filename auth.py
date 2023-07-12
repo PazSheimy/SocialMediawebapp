@@ -62,8 +62,6 @@ def login():
     return render_template('login.html')  # Render the login form
 
 
-
-
 @auth.route('/reset_password', methods=['GET', 'POST'])
 @login_required
 def reset_password():
